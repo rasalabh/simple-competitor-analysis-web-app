@@ -8,7 +8,19 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors()); // Enable CORS for all routes
+// More restrictive CORS configuration for production
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production'
+    ? process.env.CORS_ORIGIN || 'https://simple-competitor-analysis-web-app.vercel.app'
+    : '*', // Allow all origins in development
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type'],
+  credentials: false,
+  optionsSuccessStatus: 200,
+  maxAge: 86400 // Cache preflight requests for 24 hours
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Trust proxy for accurate IP identification (required for rate limiting in production)
