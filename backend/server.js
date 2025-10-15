@@ -11,6 +11,9 @@ const PORT = process.env.PORT || 3000;
 app.use(cors()); // Enable CORS for all routes
 app.use(express.json());
 
+// Trust proxy for accurate IP identification (required for rate limiting in production)
+app.set('trust proxy', 1);
+
 // Configure rate limiters with different strategies
 // Comparison rate limit set to 10/15min based on:
 // - Typical user makes 2-3 comparisons per session
