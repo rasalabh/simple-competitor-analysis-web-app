@@ -1,5 +1,8 @@
 // Configuration
-const API_URL = 'http://localhost:3000/api/compare';
+// Automatically detect if we're in development or production
+const API_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:3000/api/compare'
+  : 'https://simple-competitor-analysis-web-app.onrender.com/api/compare';
 
 // Get DOM elements
 const companyAInput = document.getElementById('companyA');
