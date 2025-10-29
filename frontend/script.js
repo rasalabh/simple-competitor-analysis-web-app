@@ -69,7 +69,7 @@ async function handleCompare() {
         }
 
         // Process and display results
-        processResults(data.responseText, companyA, companyB);
+        processResults(data.responseText, companyA, companyB, selectedModel);
         showResults();
 
     } catch (error) {
