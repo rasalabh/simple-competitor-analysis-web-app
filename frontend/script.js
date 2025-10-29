@@ -14,9 +14,12 @@ const errorMessage = document.getElementById('errorMessage');
 const resultsSection = document.getElementById('resultsSection');
 const comparisonTable = document.getElementById('comparisonTable');
 const summaryContent = document.getElementById('summaryContent');
+const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+let currentComparisonData = null;
 
 // Event Listeners
 compareBtn.addEventListener('click', handleCompare);
+downloadPdfBtn.addEventListener('click', handleDownloadPDF);
 
 // Allow Enter key to trigger comparison
 companyAInput.addEventListener('keypress', (e) => {
@@ -79,7 +82,14 @@ async function handleCompare() {
 }
 
 // Process the Gemini API response
-function processResults(responseText, companyA, companyB) {
+function processResults(responseText, companyA, companyB, model) {
+    // Store for PDF download
+    currentComparisonData = {
+        companyA,
+        companyB,
+        responseText,
+        model
+    };
     // Split response into table and summary
     const parts = responseText.split(/\n\n+/);
     
@@ -123,6 +133,70 @@ function processResults(responseText, companyA, companyB) {
 
     // Display summary
     summaryContent.innerHTML = `<p>${summaryText || 'No summary available.'}</p>`;
+}
+
+async function handleDownloadPDF() {
+    if (!currentComparisonData) {
+        showError('No comparison data available to download');
+        return;
+    }
+
+    try {
+        downloadPdfBtn.disabled = true;
+        downloadPdfBtn.textContent = 'Generating PDF...';
+
+        const response = await fetch(API_URL.replace('/compare', '/download-pdf'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(currentComparisonData)
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to generate PDF');
+        }
+
+        // Get PDF blob
+        const blob = await response.blob();
+        
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${currentComparisonData.companyA}_vs_${currentComparisonData.companyB}_Comparison.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        
+        // Cleanup
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        // Reset button
+        downloadPdfBtn.disabled = false;
+        downloadPdfBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download PDF Report
+        `;
+
+    } catch (error) {
+        console.error('PDF download error:', error);
+        showError('Failed to download PDF. Please try again.');
+        
+        downloadPdfBtn.disabled = false;
+        downloadPdfBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download PDF Report
+        `;
+    }
 }
 
 // Validate user inputs before making API call
