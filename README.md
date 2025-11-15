@@ -42,6 +42,7 @@ The **Competitor Comparison Tool** is a modern web application that leverages Go
 - ⏱️ **Cost-Effective**: Smart rate limiting protects API quota while maintaining excellent UX
 - 📱 **Fully Responsive**: Works flawlessly on desktop, tablet, and mobile devices
 - 🌍 Deployed on Render (backend) + Vercel (frontend)
+- 📄 **PDF Export**: Download professional comparison reports as formatted PDF documents
 
 ---
 
@@ -57,6 +58,7 @@ The **Competitor Comparison Tool** is a modern web application that leverages Go
 | **Smart Summaries** | AI-generated summaries highlight key strengths and differentiators |
 | **Real-Time Processing** | Live loading indicators with smooth animations |
 | **Error Handling** | Comprehensive error messages guide users when issues occur |
+| **PDF Export** | Download comparison results as professionally formatted PDF reports with tables and summaries |
 
 ### Technical Features
 
@@ -122,7 +124,9 @@ The **Competitor Comparison Tool** is a modern web application that leverages Go
 │ Axios        │ HTTP client for APIs     │
 │ dotenv       │ Environment variables    │
 │ cors         │ Cross-origin support     │
-│ express-rate-limit │ API protection    │
+│ express-rate-│                          │
+│ limit        │ API protection           │
+│ pdfkit       │ PDF generation           │
 └─────────────────────────────────────────┘
 ```
 
@@ -131,6 +135,7 @@ The **Competitor Comparison Tool** is a modern web application that leverages Go
 - **Express**: Minimalist, flexible, industry-standard web framework
 - **Axios**: Elegant HTTP client with promises and interceptors
 - **Rate Limiting**: Professional-grade API protection out of the box
+- **PDFKit**: Powerful PDF generation library for creating formatted reports
 
 ### AI Integration
 
@@ -171,22 +176,23 @@ The **Competitor Comparison Tool** is a modern web application that leverages Go
 │  ┌────────────────────────────────────────────────────────┐  │
 │  │  Express Server (Port 3000)                            │  │
 │  │  ┌──────────────────────────────────────────────────┐  │  │
-│  │  │  Middleware Layer                                 │  │  │
-│  │  │  • CORS configuration                             │  │  │
-│  │  │  • JSON body parser                               │  │  │
-│  │  │  • Rate limiting (IP-based)                       │  │  │
+│  │  │  Middleware Layer                                │  │  │
+│  │  │  • CORS configuration                            │  │  │
+│  │  │  • JSON body parser                              │  │  │
+│  │  │  • Rate limiting (IP-based)                      │  │  │
 │  │  └──────────────────────────────────────────────────┘  │  │
 │  │  ┌──────────────────────────────────────────────────┐  │  │
-│  │  │  Route Handlers                                   │  │  │
-│  │  │  • GET /health - Health check                     │  │  │
-│  │  │  • POST /api/compare - Main endpoint             │  │  │
+│  │  │  Route Handlers                                  │  │  │
+│  │  │  • GET /health - Health check                    │  │  │
+│  │  │  • POST /api/compare - Main endpoint             │  │  │    
+│  │  │  • POST /api/download-pdf - PDF generation       │  │  │
 │  │  └──────────────────────────────────────────────────┘  │  │
 │  │  ┌──────────────────────────────────────────────────┐  │  │
-│  │  │  Business Logic                                   │  │  │
-│  │  │  • Input validation                               │  │  │
-│  │  │  • Model whitelist checking                       │  │  │
-│  │  │  • Prompt engineering                             │  │  │
-│  │  │  • Response parsing                               │  │  │
+│  │  │  Business Logic                                  │  │  │
+│  │  │  • Input validation                              │  │  │
+│  │  │  • Model whitelist checking                      │  │  │
+│  │  │  • Prompt engineering                            │  │  │
+│  │  │  • Response parsing                              │  │  │
 │  │  └──────────────────────────────────────────────────┘  │  │
 │  └────────────────┬───────────────────────────────────────┘  │
 └───────────────────┼──────────────────────────────────────────┘
@@ -211,6 +217,8 @@ User Input → Frontend Validation → API Request → Rate Limit Check
 Backend Validation → Model Selection → Gemini API Call
     ↓
 Response Parsing → Markdown Processing → Frontend Display
+    ↓
+User Clicks Download → PDF Generation Request → Backend Creates PDF → File Download
 ```
 
 ### Data Flow
@@ -339,7 +347,8 @@ npm list --depth=0
 # ├── cors@2.8.5
 # ├── dotenv@16.3.1
 # ├── express@4.18.2
-# └── express-rate-limit@7.1.5
+# ├── express-rate-limit@7.1.5
+# ├── pdfkit@0.13.0
 ```
 
 #### 4. Start the Backend Server
@@ -378,6 +387,8 @@ npx http-server -p 8080
 3. **Click "Compare Now"**
 4. **Wait for results** (5-15 seconds depending on model)
 5. **View the comparison table and summary**
+6. **Click "Download PDF Report"** to save results as a formatted PDF document
+7. **Open the downloaded PDF** to verify formatting and content
 
 ---
 
@@ -486,6 +497,56 @@ POST /api/compare
   "details": "Please check your internet connection"
 }
 ```
+---
+### PDF Download Endpoint
+```http
+POST /api/download-pdf
+```
+
+**Rate Limits:**
+- Same as comparison endpoint: 10 requests per 15 minutes per IP
+- Returns `429 Too Many Requests` when exceeded
+
+**Request Body:**
+```json
+{
+  "companyA": "Apple",
+  "companyB": "Samsung",
+  "responseText": "| Attribute | Apple | Samsung |...",
+  "model": "gemini-2.5-flash"
+}
+```
+
+**Validation Rules:**
+- `companyA` & `companyB`: Required for filename generation
+- `responseText`: Required, contains the comparison markdown
+- `model`: Optional, included in PDF metadata
+
+**Success Response (200):**
+- Content-Type: `application/pdf`
+- Content-Disposition: `attachment; filename="Apple_vs_Samsung_Comparison.pdf"`
+- Binary PDF file stream
+
+**Error Responses:**
+```json
+// 400 Bad Request - Missing data
+{
+  "error": "Missing required data for PDF generation"
+}
+
+// 500 Internal Server Error - PDF generation failed
+{
+  "error": "Failed to generate PDF",
+  "details": "Error message details"
+}
+```
+**PDF Contents:**
+- Title: "Competitor Comparison Analysis"
+- Metadata: Generation timestamp and AI model used
+- Company names being compared
+- Comparison table formatted from markdown
+- Summary section
+- Footer with tool attribution
 
 ### Response Headers
 
@@ -650,18 +711,50 @@ echo "GEMINI_API_KEY=your_actual_key" > backend/.env
 - Check browser Network tab to see sent request
 - Ensure correct model identifier (case-sensitive)
 
+### PDF Download Issues
+
+**Issue:** PDF download button not appearing
+
+**Solutions:**
+- Verify comparison completed successfully
+- Check that results section is visible
+- Refresh page and try comparison again
+
+**Issue:** PDF download fails with error
+
+**Solutions:**
+- Check browser console for specific error message
+- Verify backend `/api/download-pdf` endpoint is accessible
+- Test with `curl` or Postman to isolate frontend vs backend issue
+- Check Render logs for PDF generation errors
+
+**Issue:** PDF downloads but is corrupted or won't open
+
+**Solutions:**
+- Verify `pdfkit` is installed: `npm list pdfkit` in backend
+- Check that comparison data contains valid markdown
+- Ensure no special characters breaking PDF generation
+- Try with simpler company names (e.g., "Apple" vs "Google")
+
+**Issue:** PDF missing content or formatting incorrect
+
+**Solutions:**
+- Verify markdown table parsing is working correctly
+- Check that responseText contains both table and summary
+- Test with different AI models to see if output format varies
+- Review PDF generation function for parsing logic errors
 ---
 
 ## 🔄 How It Works
 
 1. **User Input** → Frontend validates 8+ rules
-2. **API Call** → Fetch request with company names + model
-3. **Backend Processing** → Validates input, selects model, rate checks
-4. **Gemini API** → AI generates structured comparison
-5. **Response** → Markdown table received
-6. **Rendering** → Frontend converts to HTML table
-7. **Display** → User sees comparison with summary
-
+2. **API Call** → Fetch request with company names plus selected model
+3. **Backend Processing** → Validates input, selects model, performs rate checks
+4. **Gemini API** → AI generates structured comparison with markdown formatting
+5. **Response** → Markdown table received and parsed
+6. **Rendering** → Frontend converts markdown to HTML table for display
+7. **Display** → User sees comparison with summary on screen
+8. **PDF Download** (Optional) → User clicks download button, backend generates formatted PDF with complete comparison data, file downloads to user's device
 ---
 
 ## 🚀 Key Implementations
@@ -773,16 +866,14 @@ Building this project teaches:
 ---
 
 ## 📊 Project Stats
-
 ```
-Frontend:    ~300 lines (HTML/CSS/JS)
-Backend:     ~200 lines (Node.js)
-Total Code:  ~500 lines
+Frontend:    ~350 lines (HTML/CSS/JS)  ← Updated
+Backend:     ~250 lines (Node.js)      ← Updated
+Total Code:  ~600 lines                ← Updated
 Files:       6 main files
-Dependencies: 5 (Node.js packages)
+Dependencies: 6 (Node.js packages)     ← Updated
 Status:      ✅ Production Ready
 ```
-
 ---
 
 <div align="center">
