@@ -9,6 +9,9 @@ const API_URL = isLocalhost
     : 'https://simple-competitor-analysis-web-app.onrender.com/api/compare';
 
 // Get DOM elements
+const companyAInput = document.getElementById('companyA');
+const companyBInput = document.getElementById('companyB');
+const modelSelect = document.getElementById('modelSelect');
 const compareBtn = document.getElementById('compareBtn');
 const loadingSpinner = document.getElementById('loadingSpinner');
 const errorMessage = document.getElementById('errorMessage');
