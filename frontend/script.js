@@ -1,13 +1,3 @@
-// Configuration
-// Automatically detect if we're in development or production
-const API_URL = window.location.hostname === 'localhost'
-    ? 'http://localhost:3000/api/compare'
-    : 'https://simple-competitor-analysis-web-app.onrender.com/api/compare';
-
-// Get DOM elements
-const companyAInput = document.getElementById('companyA');
-const companyBInput = document.getElementById('companyB');
-const modelSelect = document.getElementById('modelSelect');
 const compareBtn = document.getElementById('compareBtn');
 const loadingSpinner = document.getElementById('loadingSpinner');
 const errorMessage = document.getElementById('errorMessage');
@@ -164,25 +154,6 @@ async function handleDownloadPDF() {
             },
             body: JSON.stringify(currentComparisonData)
         });
-
-        if (!response.ok) {
-            throw new Error('Failed to generate PDF');
-        }
-
-        // Get PDF blob
-        const blob = await response.blob();
-
-        // Create download link
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${currentComparisonData.companyA}_vs_${currentComparisonData.companyB}_Comparison.pdf`;
-        document.body.appendChild(a);
-        a.click();
-
-        // Cleanup
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
 
         // Reset button
         downloadPdfBtn.disabled = false;
