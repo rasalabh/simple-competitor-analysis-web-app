@@ -1,8 +1,8 @@
 // Configuration
 // Automatically detect if we're in development or production
-const API_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost:3000/api/compare'
-  : 'https://simple-competitor-analysis-web-app.onrender.com/api/compare';
+const API_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:3000/api/compare'
+    : 'https://simple-competitor-analysis-web-app.onrender.com/api/compare';
 
 // Get DOM elements
 const companyAInput = document.getElementById('companyA');
@@ -15,6 +15,7 @@ const resultsSection = document.getElementById('resultsSection');
 const comparisonTable = document.getElementById('comparisonTable');
 const summaryContent = document.getElementById('summaryContent');
 const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+const webSearchCheckbox = document.getElementById('webSearchCheckbox');
 let currentComparisonData = null;
 
 // Event Listeners
@@ -45,6 +46,16 @@ async function handleCompare() {
     // Reset UI
     hideError();
     hideResults();
+
+    // Update loading text based on search preference
+    const useWebSearch = webSearchCheckbox.checked;
+    const loadingText = document.querySelector('#loadingSpinner p');
+    if (loadingText) {
+        loadingText.textContent = useWebSearch
+            ? 'Searching live data & Analyzing...'
+            : 'Analyzing competitors...';
+    }
+
     showLoading();
     disableButton();
 
@@ -55,10 +66,11 @@ async function handleCompare() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ 
-                companyA, 
+            body: JSON.stringify({
+                companyA,
                 companyB,
-                model: selectedModel 
+                model: selectedModel,
+                useWebSearch
             })
         });
 
@@ -92,13 +104,13 @@ function processResults(responseText, companyA, companyB, model) {
     };
     // Split response into table and summary
     const parts = responseText.split(/\n\n+/);
-    
+
     let tableMarkdown = '';
     let summaryText = '';
-    
+
     // Find the table (starts with |)
     const tableStart = parts.findIndex(part => part.trim().startsWith('|'));
-    
+
     if (tableStart !== -1) {
         // Extract table
         let tableEnd = tableStart;
@@ -109,9 +121,9 @@ function processResults(responseText, companyA, companyB, model) {
                 break;
             }
         }
-        
+
         tableMarkdown = parts.slice(tableStart, tableEnd + 1).join('\n');
-        
+
         // Extract summary (everything after the table)
         summaryText = parts.slice(tableEnd + 1).join('\n\n').trim();
     } else {
@@ -119,7 +131,7 @@ function processResults(responseText, companyA, companyB, model) {
         const lines = responseText.split('\n');
         const tableLines = lines.filter(line => line.trim().startsWith('|'));
         tableMarkdown = tableLines.join('\n');
-        
+
         // Get text that doesn't have table markers
         summaryText = lines
             .filter(line => !line.trim().startsWith('|') && line.trim())
@@ -159,7 +171,7 @@ async function handleDownloadPDF() {
 
         // Get PDF blob
         const blob = await response.blob();
-        
+
         // Create download link
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -167,7 +179,7 @@ async function handleDownloadPDF() {
         a.download = `${currentComparisonData.companyA}_vs_${currentComparisonData.companyB}_Comparison.pdf`;
         document.body.appendChild(a);
         a.click();
-        
+
         // Cleanup
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
@@ -186,7 +198,7 @@ async function handleDownloadPDF() {
     } catch (error) {
         console.error('PDF download error:', error);
         showError('Failed to download PDF. Please try again.');
-        
+
         downloadPdfBtn.disabled = false;
         downloadPdfBtn.innerHTML = `
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -240,7 +252,7 @@ function validateInputs(companyA, companyB) {
     const placeholders = ['company', 'example', 'test', 'placeholder', 'enter company'];
     const companyALower = companyA.toLowerCase();
     const companyBLower = companyB.toLowerCase();
-    
+
     if (placeholders.includes(companyALower) || placeholders.includes(companyBLower)) {
         return 'Please enter real company names instead of placeholder text';
     }
@@ -260,7 +272,7 @@ function markdownTableToHTML(markdown) {
     if (!markdown) return '<p>No table data available</p>';
 
     const lines = markdown.split('\n').filter(line => line.trim());
-    
+
     if (lines.length < 2) return '<p>Invalid table format</p>';
 
     let html = '<table class="comparison-table"><thead><tr>';
