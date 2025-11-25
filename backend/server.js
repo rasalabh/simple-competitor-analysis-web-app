@@ -75,33 +75,32 @@ const comparisonLimiter = rateLimit({
 
 const PDFDocument = require('pdfkit');
 
-// Function to generate PDF from comparison results
+// Function to generate PDF from comparison results - IMPROVED VERSION
 function generateComparisonPDF(companyA, companyB, responseText, model) {
   const doc = new PDFDocument({
     size: 'A4',
-    margins: { top: 50, bottom: 50, left: 50, right: 50 }
+    margins: { top: 50, bottom: 50, left: 40, right: 40 }
   });
 
   // Title
-  doc.fontSize(20)
+  doc.fontSize(18)
     .font('Helvetica-Bold')
     .text('Competitor Comparison Analysis', { align: 'center' })
-    .moveDown();
+    .moveDown(0.5);
 
   // Metadata
-  doc.fontSize(10)
+  doc.fontSize(9)
     .font('Helvetica')
     .fillColor('#666')
-    .text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' })
-    .text(`AI Model: ${model}`, { align: 'center' })
-    .moveDown(2);
+    .text(`Generated: ${new Date().toLocaleString()} | AI Model: ${model}`, { align: 'center' })
+    .moveDown(0.8);
 
   // Companies being compared
-  doc.fontSize(14)
+  doc.fontSize(13)
     .font('Helvetica-Bold')
     .fillColor('#000')
     .text(`${companyA} vs ${companyB}`, { align: 'center' })
-    .moveDown(2);
+    .moveDown(1);
 
   // Split response into table and summary
   const sections = responseText.split(/\n\n+/);
@@ -122,70 +121,94 @@ function generateComparisonPDF(companyA, companyB, responseText, model) {
     summaryText = sections.slice(tableEnd + 1).join('\n\n').trim();
   }
 
-  // Parse and render table
+  // Parse and render table with proper alignment
   if (tableMarkdown) {
     const lines = tableMarkdown.split('\n').filter(line => line.trim());
 
-    // Table title
-    doc.fontSize(12)
+    doc.fontSize(11)
       .font('Helvetica-Bold')
+      .fillColor('#000')
       .text('Comparison Table', { underline: true })
-      .moveDown();
+      .moveDown(0.5);
 
-    // Parse table rows
     const rows = lines.filter((line, idx) => idx !== 1); // Skip separator line
 
-    rows.forEach((row, idx) => {
-      const cells = row.split('|').filter(cell => cell.trim()).map(c => c.trim());
+    // Calculate column widths
+    const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    const columnWidths = [pageWidth * 0.28, pageWidth * 0.36, pageWidth * 0.36];
+    const startX = doc.page.margins.left;
+    const cellPadding = 5;
 
-      if (idx === 0) {
-        // Header row
-        doc.fontSize(10).font('Helvetica-Bold').fillColor('#4f46e5');
+    rows.forEach((row, rowIdx) => {
+      const cells = row.split('|').filter(cell => cell.trim()).map(c => c.trim());
+      const rowY = doc.y;
+
+      if (rowIdx === 0) {
+        doc.fontSize(9).font('Helvetica-Bold').fillColor('#4f46e5');
       } else {
-        // Data rows
-        doc.fontSize(9).font('Helvetica').fillColor('#000');
+        doc.fontSize(8.5).font('Helvetica').fillColor('#000');
       }
 
-      const cellWidth = 160;
-      let xPosition = 50;
-
-      cells.forEach((cell, cellIdx) => {
-        doc.text(cell, xPosition, doc.y, {
-          width: cellWidth,
-          align: 'left'
-        });
-        xPosition += cellWidth + 10;
+      // Calculate row height
+      let maxHeight = 20;
+      cells.forEach((cell, colIdx) => {
+        if (colIdx < columnWidths.length) {
+          const textHeight = doc.heightOfString(cell, {
+            width: columnWidths[colIdx] - (cellPadding * 2),
+            align: 'left'
+          });
+          maxHeight = Math.max(maxHeight, textHeight + (cellPadding * 2));
+        }
       });
 
-      doc.moveDown(0.5);
+      // Draw alternating row background
+      if (rowIdx > 0 && rowIdx % 2 === 0) {
+        doc.fillColor('#f9fafb').rect(startX, rowY, pageWidth, maxHeight).fill();
+      }
+
+      // Draw cell text
+      let xPosition = startX;
+      cells.forEach((cell, colIdx) => {
+        if (colIdx < columnWidths.length) {
+          if (rowIdx === 0) {
+            doc.fillColor('#4f46e5');
+          } else {
+            doc.fillColor('#000');
+          }
+
+          doc.text(cell, xPosition + cellPadding, rowY + cellPadding, {
+            width: columnWidths[colIdx] - (cellPadding * 2),
+            align: 'left',
+            lineGap: 1
+          });
+
+          xPosition += columnWidths[colIdx];
+        }
+      });
+
+      // Underline header
+      if (rowIdx === 0) {
+        doc.strokeColor('#4f46e5').lineWidth(1.5)
+          .moveTo(startX, rowY + maxHeight).lineTo(startX + pageWidth, rowY + maxHeight).stroke();
+      }
+
+      doc.y = rowY + maxHeight;
     });
   }
 
   // Summary section
   if (summaryText) {
-    doc.moveDown(2)
-      .fontSize(12)
-      .font('Helvetica-Bold')
-      .fillColor('#000')
+    doc.moveDown(1.2)
+      .fontSize(11).font('Helvetica-Bold').fillColor('#000')
       .text('Summary', { underline: true })
-      .moveDown()
-      .fontSize(10)
-      .font('Helvetica')
-      .text(summaryText, {
-        align: 'justify',
-        lineGap: 5
-      });
+      .moveDown(0.5)
+      .fontSize(9).font('Helvetica')
+      .text(summaryText, { align: 'justify', lineGap: 3 });
   }
 
   // Footer
-  doc.fontSize(8)
-    .fillColor('#999')
-    .text(
-      'Generated by AI-Powered Competitor Comparison Tool',
-      50,
-      doc.page.height - 50,
-      { align: 'center' }
-    );
+  doc.fontSize(7).fillColor('#999')
+    .text('Generated by AI-Powered Competitor Comparison Tool', 50, doc.page.height - 40, { align: 'center' });
 
   return doc;
 }
