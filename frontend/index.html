@@ -1,11 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Competitor Comparison Tool</title>
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="/assets/icons/favicon.svg">
+    <link rel="icon" type="image/png" href="/assets/icons/favicon-96x96.png" sizes="96x96">
+    <link rel="alternate icon" href="/assets/icons/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/icons/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="shortcut icon" href="/assets/icons/favicon.ico">
+
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="container">
         <header class="hero">
@@ -17,24 +27,14 @@
             <div class="input-section">
                 <div class="input-group">
                     <label for="companyA">Company A</label>
-                    <input 
-                        type="text" 
-                        id="companyA" 
-                        placeholder="e.g., Apple"
-                        autocomplete="off"
-                    >
+                    <input type="text" id="companyA" placeholder="e.g., Apple" autocomplete="off">
                 </div>
 
                 <div class="vs-badge">VS</div>
 
                 <div class="input-group">
                     <label for="companyB">Company B</label>
-                    <input 
-                        type="text" 
-                        id="companyB" 
-                        placeholder="e.g., Samsung"
-                        autocomplete="off"
-                    >
+                    <input type="text" id="companyB" placeholder="e.g., Samsung" autocomplete="off">
                 </div>
 
                 <div class="input-group model-selector-group">
@@ -47,6 +47,13 @@
                         <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite</option>
                     </select>
                     <span class="model-info">Choose the AI model for comparison</span>
+                </div>
+
+                <div class="input-group checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="webSearchCheckbox" class="web-search-checkbox">
+                        Enable Tavily Web Search (Ground AI response with web data)
+                    </label>
                 </div>
 
                 <button id="compareBtn" class="compare-btn">
@@ -67,10 +74,10 @@
             <div id="resultsSection" class="results-section" style="display: none;">
                 <h2 class="results-title">Comparison Results</h2>
 
-                <!-- ADD THIS DOWNLOAD BUTTON -->
                 <div class="download-section">
                     <button id="downloadPdfBtn" class="download-pdf-btn">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                             <polyline points="7 10 12 15 17 10"></polyline>
                             <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -80,7 +87,7 @@
                 </div>
 
                 <div id="comparisonTable" class="table-container"></div>
-                
+
                 <div id="summarySection" class="summary-section">
                     <h3>Summary</h3>
                     <div id="summaryContent"></div>
@@ -95,4 +102,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>

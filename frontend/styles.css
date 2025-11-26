@@ -144,27 +144,6 @@ body {
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
-.model-info {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    font-style: italic;
-}
-
-.vs-badge {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    color: white;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 1rem;
-    box-shadow: var(--shadow-md);
-    margin-bottom: 8px;
-}
-
 .compare-btn {
     grid-column: 1 / -1;
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
